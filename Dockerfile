@@ -70,24 +70,60 @@ RUN cmake -B build \
 
 FROM $DOCKER_IMAGE AS runtime
 
+# 1. This block MUST come first to install curl and create the user
+RUN apk add --no-cache curl gmp libstdc++ libgcc libpq jsoncpp zstd-libs \
+ sqlite-libs postgresql hiredis leveldb && \
+ adduser -D minetest --uid 30000 -h /var/lib/minetest && \
+ chown -R minetest:minetest /var/lib/minetest
+
+WORKDIR /var/lib/minetest
+
+# 2. NOW you can download the game because curl and the user exist
 RUN mkdir -p /var/lib/minetest/.minetest/games && \
     cd /var/lib/minetest/.minetest/games && \
     curl -sL https://github.com/minetest/minetest_game/archive/master.tar.gz | tar -xz && \
     mv minetest_game-master minetest_game && \
     chown -R minetest:minetest /var/lib/minetest/.minetest
 
-RUN apk add --no-cache curl gmp libstdc++ libgcc libpq jsoncpp zstd-libs \
-				sqlite-libs postgresql hiredis leveldb && \
-	adduser -D minetest --uid 30000 -h /var/lib/minetest && \
-	chown -R minetest:minetest /var/lib/minetest
-
-WORKDIR /var/lib/minetest
-
+# 3. Then copy in the built server files
 COPY --from=builder /usr/local/share/luanti /usr/local/share/luanti
 COPY --from=builder /usr/local/bin/luantiserver /usr/local/bin/luantiserver
 COPY --from=builder /usr/local/share/doc/luanti/minetest.conf.example /etc/minetest/minetest.conf
-COPY --from=builder /usr/local/lib/libspatialindex* /usr/local/lib/
-COPY --from=builder /usr/local/lib/libluajit* /usr/local/lib/
+COPY --from=builder /usr/local/lib/libspatialindex\* /usr/local/lib/
+COPY --from=builder /usr/local/lib/libluajit\* /usr/local/lib/
+
+# 4. Finally, switch to the user and start the server
+USER minetest:minetest
+
+EXPOSE 30000/udp 30000/tcp
+VOLUME /var/lib/minetest/ /etc/minetest/
+
+ENTRYPOINT ["/usr/local/bin/luantiserver"]
+CMD ["--config", "/etc/minetest/minetest.conf"]FROM $DOCKER_IMAGE AS runtime
+
+# 1. This block MUST come first to install curl and create the user
+RUN apk add --no-cache curl gmp libstdc++ libgcc libpq jsoncpp zstd-libs \
+ sqlite-libs postgresql hiredis leveldb && \
+ adduser -D minetest --uid 30000 -h /var/lib/minetest && \
+ chown -R minetest:minetest /var/lib/minetest
+
+WORKDIR /var/lib/minetest
+
+# 2. NOW you can download the game because curl and the user exist
+RUN mkdir -p /var/lib/minetest/.minetest/games && \
+    cd /var/lib/minetest/.minetest/games && \
+    curl -sL https://github.com/minetest/minetest_game/archive/master.tar.gz | tar -xz && \
+    mv minetest_game-master minetest_game && \
+    chown -R minetest:minetest /var/lib/minetest/.minetest
+
+# 3. Then copy in the built server files
+COPY --from=builder /usr/local/share/luanti /usr/local/share/luanti
+COPY --from=builder /usr/local/bin/luantiserver /usr/local/bin/luantiserver
+COPY --from=builder /usr/local/share/doc/luanti/minetest.conf.example /etc/minetest/minetest.conf
+COPY --from=builder /usr/local/lib/libspatialindex\* /usr/local/lib/
+COPY --from=builder /usr/local/lib/libluajit\* /usr/local/lib/
+
+# 4. Finally, switch to the user and start the server
 USER minetest:minetest
 
 EXPOSE 30000/udp 30000/tcp
