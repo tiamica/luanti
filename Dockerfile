@@ -12,9 +12,9 @@ RUN apk add --no-cache git build-base cmake curl-dev zlib-dev zstd-dev \
 
 WORKDIR /usr/src/
 
-RUN git clone --branch master https://github.com/jupp0r/prometheus-cpp.git /usr/src/prometheus-cpp && \
-    git clone --branch main https://github.com/libspatialindex/libspatialindex.git /usr/src/libspatialindex && \
-    git clone --branch ${LUAJIT_VERSION} https://luajit.org/git/luajit.git /usr/src/luajit
+RUN git clone --recurse-submodules --branch master https://github.com/jupp0r/prometheus-cpp.git /usr/src/prometheus-cpp && \
+    git clone --recurse-submodules --branch main https://github.com/libspatialindex/libspatialindex.git /usr/src/libspatialindex && \
+    git clone --recurse-submodules --branch ${LUAJIT_VERSION} https://luajit.org/git/luajit.git /usr/src/luajit
 	
 # ADD https://github.com/jupp0r/prometheus-cpp.git?branch=master /usr/src/prometheus-cpp
 # ADD https://github.com/libspatialindex/libspatialindex.git?branch=main /usr/src/libsp/atialindex
