@@ -5,7 +5,7 @@ steps:
 
   # Step 2: Run the container inside the Cloud Build environment
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['run', '--rm', '-p', '30000:30000/udp', 'gcr.io/$PROJECT_ID/luanti-server']
+    args: ['run', '--rm', '-p', '30000:30000/udp', 'gcr.io/$PROJECT_ID/luanti-server', '--config', '/etc/minetest/minetest.conf', '--gameid', 'minetest_game']
 
 # The default Cloud Build timeout is 10 minutes. 
 # You can extend this up to a maximum of 24 hours (86400s).
